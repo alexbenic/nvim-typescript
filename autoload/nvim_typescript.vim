@@ -3,5 +3,6 @@ function! nvim_typescript#DefaultKeyMap()
     execute 'nnoremap <buffer> <silent> K'  ':TSDoc<CR>'
     execute 'nnoremap <buffer> <silent> <leader>tdp'  ':TSDefPreview<CR>'
     execute 'nnoremap <buffer> <silent> <c-]>'  ':TSTypeDef<CR>'
+    execute 'nnoremap <buffer> <silent> <c-t>'  ':TSGoBack<CR>'
   endif
 endfunction

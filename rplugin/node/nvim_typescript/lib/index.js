@@ -35,6 +35,7 @@ let TSHost = class TSHost {
         this.nvim
             .getVar('nvim_typescript#server_options')
             .then((val) => (this.client.serverOptions = val));
+        this.navStack = [];
     }
     getType() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -57,7 +58,17 @@ let TSHost = class TSHost {
                 const defLine = typeDefRes[0].start.line;
                 const defOffset = typeDefRes[0].start.offset;
                 yield this.openBufferOrWindow(defFile, defLine, defOffset);
+                this.navStack.push(args);
             }
+        });
+    }
+    tsgoback() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.navStack.length) {
+                this.printMsg('No items in navigation stack...');
+            }
+            const { file, line, offset } = this.navStack.pop();
+            yield this.openBufferOrWindow(file, line, offset);
         });
     }
     tsImport() {
@@ -644,6 +655,12 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], TSHost.prototype, "tstypedef", null);
+__decorate([
+    neovim_1.Command('TSGoBack'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], TSHost.prototype, "tsgoback", null);
 __decorate([
     neovim_1.Command('TSImport'),
     __metadata("design:type", Function),

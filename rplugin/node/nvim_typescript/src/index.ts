@@ -15,11 +15,18 @@ import {
 } from './utils';
 import { writeFileSync, statSync } from 'fs';
 
+type PositionInfo = {
+  file: string;
+  line: number;
+  offset: number;
+};
+
 @Plugin({ dev: false })
 export default class TSHost {
   private nvim: Neovim;
   private client = Client;
   private maxCompletion: number;
+  private navStack: PositionInfo[];
 
   constructor(nvim) {
     this.nvim = nvim;
@@ -32,6 +39,8 @@ export default class TSHost {
     this.nvim
       .getVar('nvim_typescript#server_options')
       .then((val: any) => (this.client.serverOptions = val));
+
+    this.navStack = [];
   }
 
   @Command('TSType')
@@ -58,7 +67,19 @@ export default class TSHost {
       const defLine = typeDefRes[0].start.line;
       const defOffset = typeDefRes[0].start.offset;
       await this.openBufferOrWindow(defFile, defLine, defOffset);
+      this.navStack.push(args);
     }
+  }
+
+  @Command('TSGoBack')
+  async tsgoback() {
+    if (!this.navStack.length) {
+      this.printMsg('No items in navigation stack...');
+    }
+
+    const { file, line, offset } = this.navStack.pop();
+
+    await this.openBufferOrWindow(file, line, offset);
   }
 
   @Command('TSImport')
@@ -470,25 +491,26 @@ export default class TSHost {
 
   @Function('TSGetWorkspaceSymbolsFunc', { sync: true })
   async getWorkspaceSymbolsFunc(args) {
-      const searchValue = args.length > 0 ? args[0] : '';
-      const maxResultCount = 50;
-      const results = await this.client.getWorkspaceSymbols({
-          file: args[1],
-          searchValue,
-          maxResultCount: 50
-      });
+    const searchValue = args.length > 0 ? args[0] : '';
+    const maxResultCount = 50;
+    const results = await this.client.getWorkspaceSymbols({
+      file: args[1],
+      searchValue,
+      maxResultCount: 50
+    });
 
-      const symbolsRes = await Promise.all(
+    const symbolsRes = await Promise.all(
       results.map(async symbol => {
         return {
           filename: symbol.file,
           lnum: symbol.start.line,
           col: symbol.start.offset,
           text: `${await getKind(this.nvim, symbol.kind)}\t ${symbol.name}`
-        }
-      }))
+        };
+      })
+    );
 
-      return symbolsRes;
+    return symbolsRes;
   }
 
   @Function('TSGetProjectInfoFunc', { sync: true })
@@ -509,13 +531,13 @@ export default class TSHost {
   }
 
   async openBufferOrWindow(file: string, lineNumber: number, offset: number) {
-
-    const fileIsAlreadyFocused =
-        await this.getCurrentFile().then(currentFile => file === currentFile);
+    const fileIsAlreadyFocused = await this.getCurrentFile().then(
+      currentFile => file === currentFile
+    );
 
     if (fileIsAlreadyFocused) {
-        await this.nvim.command(`call cursor(${lineNumber}, ${offset})`);
-        return;
+      await this.nvim.command(`call cursor(${lineNumber}, ${offset})`);
+      return;
     }
 
     const windowNumber = await this.nvim.call('bufwinnr', file);
@@ -666,11 +688,7 @@ export default class TSHost {
   async getCursorPos(): Promise<[number, number]> {
     return await this.nvim.window.cursor;
   }
-  async getCommonData(): Promise<{
-    file: string;
-    line: number;
-    offset: number;
-  }> {
+  async getCommonData(): Promise<PositionInfo> {
     let file = await this.getCurrentFile();
     let cursorPos = await this.getCursorPos();
     return {

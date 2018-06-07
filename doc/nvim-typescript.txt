@@ -123,6 +123,12 @@ COMMANDS                                                  *typescript-commands*
 
     Goes to the file where the type for the symbol is defined.
 
+                                                                   *:TSGoBack*
+:TSGoBack
+
+    Move the cursor position to the location where last |:TSTypeDef| was
+    called.
+
                                                                 *:TSEditConfig*
 :TSEditConfig
 
@@ -242,6 +248,7 @@ Mapping        Action
 K              :TSDoc
 <leader>tdp    :TSDefPreview
 <c-]>          :TSTypeDef
+<c-t>          :TSGoBack
 
 
 ===============================================================================
