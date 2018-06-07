@@ -789,7 +789,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], TSHost.prototype, "onCMRefresh", null);
 TSHost = __decorate([
-    neovim_1.Plugin({ dev: true }),
+    neovim_1.Plugin({ dev: false }),
     __metadata("design:paramtypes", [Object])
 ], TSHost);
 exports.default = TSHost;

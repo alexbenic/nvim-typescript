@@ -15,7 +15,7 @@ import {
 } from './utils';
 import { writeFileSync, statSync } from 'fs';
 
-@Plugin({ dev: true })
+@Plugin({ dev: false })
 export default class TSHost {
   private nvim: Neovim;
   private client = Client;
